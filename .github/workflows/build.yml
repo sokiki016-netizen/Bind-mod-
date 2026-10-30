@@ -44,6 +44,22 @@ jobs:
             echo "::error::${line//$'\n'/ }"
           done
 
+      - name: Verify jar
+        run: |
+          JAR=$(find build/libs -maxdepth 1 -name "bindmod-*.jar" ! -name "*-sources.jar" | head -n1)
+          echo "jar: $JAR"
+          unzip -l "$JAR" | tail -n 8
+          unzip -p "$JAR" fabric.mod.json
+          SIZE=$(stat -c%s "$JAR")
+          SHA=$(sha256sum "$JAR" | cut -d' ' -f1)
+          ENTRIES=$(unzip -l "$JAR" | wc -l)
+          # ремап в intermediary: в классах должны быть имена вида class_310
+          REMAPPED=$(unzip -p "$JAR" com/sokiki/bindmod/BindModClient.class | strings | grep -c "class_" || true)
+          echo "::notice::jar=$SIZE bytes, entries=$ENTRIES, remapped_hits=$REMAPPED, sha256=$SHA"
+          if [ "$SIZE" -lt 10000 ]; then echo "::error::jar too small"; exit 1; fi
+          if [ "$REMAPPED" -lt 1 ]; then echo "::error::jar не отремаплен в intermediary"; exit 1; fi
+          unzip -p "$JAR" fabric.mod.json | grep -q '\${version}' && { echo "::error::version не подставлен в fabric.mod.json"; exit 1; } || true
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
