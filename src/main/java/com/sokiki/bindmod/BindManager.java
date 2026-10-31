@@ -54,6 +54,19 @@ public final class BindManager {
 			this.menuLatched = false;
 		}
 
+		// быстрая метка на текущих координатах
+		BindKey waypointKey = this.config.waypointKey;
+		boolean placeDown = waypointKey != null && waypointKey.isSet() && waypointKey.isDown();
+		boolean placeWas = this.isHeld(waypointKey);
+		this.setHeld(waypointKey, placeDown);
+		if (placeDown && !placeWas && inGame && !waypointKey.sameAs(menuKey)) {
+			Waypoint placed = Waypoints.addHere(this.config);
+			if (placed != null) {
+				Waypoints.notifyPlayer("§b[Bind Mod] §fМетка поставлена: §b" + placed.name
+						+ " §7(" + placed.coords() + ")");
+			}
+		}
+
 		List<Bind> snapshot = new ArrayList<>(this.config.binds);
 		for (Bind bind : snapshot) {
 			BindKey key = bind.key;

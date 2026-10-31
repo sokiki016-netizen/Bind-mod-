@@ -1,6 +1,8 @@
 package com.sokiki.bindmod;
 
 import com.sokiki.bindmod.hud.ArmorHud;
+import com.sokiki.bindmod.hud.WaypointHud;
+import com.sokiki.bindmod.hud.WaypointRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -23,7 +25,12 @@ public class BindModClient implements ClientModInitializer {
 			ANTI_AFK.tick(config);
 		});
 
-		HudRenderCallback.EVENT.register((graphics, tickCounter) -> ArmorHud.render(graphics, config));
+		WaypointRenderer.register(config);
+
+		HudRenderCallback.EVENT.register((graphics, tickCounter) -> {
+			ArmorHud.render(graphics, config);
+			WaypointHud.render(graphics, config);
+		});
 
 		BindMod.LOGGER.info("[Bind Mod] Загружено биндов: {}", config.binds.size());
 	}
