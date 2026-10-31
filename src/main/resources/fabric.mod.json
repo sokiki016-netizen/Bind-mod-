@@ -3,7 +3,7 @@
 	"id": "bindmod",
 	"version": "${version}",
 	"name": "Bind Mod",
-	"description": "Client-side keybind -> chat command macros. Press the Bind Menu key (Right Alt by default), add a command, pick a key - done. Works on any server, no server-side installation required.",
+	"description": "Client-side keybinds for chat commands plus a small HUD (armor durability) and an anti-AFK module. Press the menu key (Right Alt by default) to open the glass-styled menu. No server-side installation, no cheats.",
 	"authors": [
 		"sokiki016-netizen"
 	],

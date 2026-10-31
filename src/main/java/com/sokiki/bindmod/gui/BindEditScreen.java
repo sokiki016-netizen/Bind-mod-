@@ -3,8 +3,10 @@ package com.sokiki.bindmod.gui;
 import com.sokiki.bindmod.Bind;
 import com.sokiki.bindmod.BindKey;
 import com.sokiki.bindmod.BindManager;
+import com.sokiki.bindmod.ui.Glass;
+import com.sokiki.bindmod.ui.GlassButton;
+import com.sokiki.bindmod.ui.Theme;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -18,57 +20,70 @@ public class BindEditScreen extends Screen {
 	private final Bind existing;
 
 	private EditBox commandBox;
-	private String hint;
+	private String hint = "";
+	private int x0;
+	private int y0;
+	private int panelW = 340;
+	private int panelH = 178;
 
 	public BindEditScreen(Screen parent, BindManager manager, Bind existing) {
 		super(Component.literal("Bind Mod"));
 		this.parent = parent;
 		this.manager = manager;
 		this.existing = existing;
-		this.hint = "";
 	}
 
 	@Override
 	protected void init() {
 		this.clearWidgets();
-		int cx = this.width / 2;
+		this.panelW = Math.min(340, this.width - 40);
+		this.panelH = Math.min(196, this.height - 40);
+		this.x0 = (this.width - this.panelW) / 2;
+		this.y0 = (this.height - this.panelH) / 2;
 
-		this.commandBox = new EditBox(this.font, cx - 150, 84, 300, 20, Component.literal("Команда"));
+		int fieldX = this.x0 + 16;
+		int fieldW = this.panelW - 32;
+
+		this.commandBox = new EditBox(this.font, fieldX + 7, this.y0 + 56, fieldW - 14, 16,
+				Component.literal("Команда"));
 		this.commandBox.setMaxLength(256);
+		this.commandBox.setBordered(false);
+		this.commandBox.setTextColor(Theme.TEXT);
+		this.commandBox.setTextColorUneditable(Theme.MUTED);
 		this.commandBox.setValue(this.existing == null ? "/" : this.existing.command);
 		this.commandBox.setFocused(true);
+		this.setFocused(this.commandBox);
 		this.addRenderableWidget(this.commandBox);
 
-		this.addRenderableWidget(Button.builder(Component.literal("§aДалее: нажать клавишу"), b -> this.proceed())
-				.bounds(cx - 150, 116, 300, 20).build());
-
+		int buttonY = this.y0 + this.panelH - 32;
 		if (this.existing != null) {
-			this.addRenderableWidget(Button.builder(Component.literal("§cУдалить бинд"), b -> {
+			this.addRenderableWidget(new GlassButton(fieldX, buttonY, fieldW / 2 - 4, 22, "Удалить", false, () -> {
 				this.manager.config().binds.remove(this.existing);
 				this.manager.config().save();
 				this.minecraft.setScreen(this.parent);
-			}).bounds(cx - 150, 140, 146, 20).build());
-
-			this.addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.setScreen(this.parent))
-					.bounds(cx + 4, 140, 146, 20).build());
+			}));
+			this.addRenderableWidget(new GlassButton(fieldX + fieldW / 2 + 4, buttonY, fieldW / 2 - 4, 22,
+					"Далее: клавиша", true, this::proceed));
 		} else {
-			this.addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.setScreen(this.parent))
-					.bounds(cx - 150, 140, 300, 20).build());
+			this.addRenderableWidget(new GlassButton(fieldX, buttonY, fieldW / 2 - 4, 22, "Отмена", false,
+					() -> this.minecraft.setScreen(this.parent)));
+			this.addRenderableWidget(new GlassButton(fieldX + fieldW / 2 + 4, buttonY, fieldW / 2 - 4, 22,
+					"Далее: клавиша", true, this::proceed));
 		}
 	}
 
 	private void proceed() {
 		String command = this.commandBox.getValue().trim();
 		if (command.isEmpty()) {
-			this.hint = "§cВведите команду или текст сообщения";
+			this.hint = "Введите команду или текст сообщения";
 			return;
 		}
-		this.minecraft.setScreen(new KeyCaptureScreen(this, "Клавиша для команды " + shortCommand(command),
+		this.minecraft.setScreen(new KeyCaptureScreen(this, "Клавиша для «" + shortCommand(command) + "»",
 				key -> this.apply(key, command)));
 	}
 
 	private static String shortCommand(String command) {
-		return command.length() > 20 ? command.substring(0, 19) + "…" : command;
+		return command.length() > 18 ? command.substring(0, 17) + "…" : command;
 	}
 
 	private void apply(BindKey key, String command) {
@@ -85,8 +100,8 @@ public class BindEditScreen extends Screen {
 
 		if (this.minecraft.player != null) {
 			String message = replaced
-					? "§e[Bind Mod] §fКлавиша была занята — старый бинд заменён: §a" + command
-					: "§a[Bind Mod] §fЗабинжено: §e" + key.displayName() + " §7→ §a" + command;
+					? "§b[Bind Mod] §fКлавиша была занята — старый бинд заменён на §b" + command
+					: "§b[Bind Mod] §fЗабинжено: §f" + key.displayName() + " §7→ §b" + command;
 			this.minecraft.player.displayClientMessage(Component.literal(message), false);
 		}
 		this.minecraft.setScreen(null);
@@ -106,32 +121,40 @@ public class BindEditScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		graphics.fill(0, 0, this.width, this.height, Theme.BACKDROP);
+	}
+
+	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-		graphics.fill(0, 0, this.width, this.height, 0xE0101010);
-		super.render(graphics, mouseX, mouseY, partialTick);
-		int cx = this.width / 2;
+		this.renderBackground(graphics, mouseX, mouseY, partialTick);
+		Glass.panel(graphics, this.x0, this.y0, this.panelW, this.panelH, 10);
 
-		graphics.drawCenteredString(this.font,
-				Component.literal(this.existing == null ? "§l§bНовый бинд" : "§l§bИзменить бинд"),
-				cx, 34, 0xFFFFFF);
+		int fieldX = this.x0 + 16;
+		int fieldW = this.panelW - 32;
 
-		graphics.drawCenteredString(this.font,
-				Component.literal("§7Команда (начните с §f/§7 для команд, без §f/§7 — сообщение в чат):"),
-				cx, 68, 0xA0A0A0);
+		Glass.text(graphics, this.existing == null ? "НОВЫЙ БИНД" : "ИЗМЕНИТЬ БИНД",
+				fieldX, this.y0 + 18, Theme.MUTED);
+		Glass.textRight(graphics, "Esc — назад", this.x0 + this.panelW - 16, this.y0 + 18, Theme.FAINT);
+
+		Glass.text(graphics, "Команда", fieldX, this.y0 + 40, Theme.TEXT);
+		Glass.inner(graphics, fieldX, this.y0 + 51, fieldW, 24, 4);
 
 		if (this.existing != null && this.existing.key != null) {
-			graphics.drawCenteredString(this.font,
-					Component.literal("§7Текущая клавиша: §f" + this.existing.key.displayName()),
-					cx, 168, 0xA0A0A0);
+			Glass.text(graphics, "Клавиша: " + this.existing.key.displayName(),
+					fieldX, this.y0 + 84, Theme.MUTED);
+		} else {
+			Glass.text(graphics, "С «/» — команда, без «/» — сообщение в чат",
+					fieldX, this.y0 + 84, Theme.FAINT);
 		}
 
 		if (!this.hint.isEmpty()) {
-			graphics.drawCenteredString(this.font, Component.literal(this.hint), cx, 186, 0xFF5555);
+			Glass.text(graphics, this.hint, fieldX, this.y0 + 100, Theme.DANGER);
 		}
 
-		if (this.existing != null && this.existing.key != null && this.existing.key.isMouse()) {
-			graphics.drawCenteredString(this.font, Component.literal("§8(кнопка мыши)"), cx, 200, 0x707070);
-		}
+		Glass.text(graphics, "Enter — далее по клавише", fieldX, this.y0 + this.panelH - 46, Theme.FAINT);
+
+		super.render(graphics, mouseX, mouseY, partialTick);
 	}
 
 	@Override

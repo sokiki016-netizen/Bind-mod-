@@ -1,8 +1,10 @@
 package com.sokiki.bindmod.gui;
 
 import com.sokiki.bindmod.BindKey;
+import com.sokiki.bindmod.ui.Glass;
+import com.sokiki.bindmod.ui.GlassButton;
+import com.sokiki.bindmod.ui.Theme;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
@@ -17,6 +19,10 @@ public class KeyCaptureScreen extends Screen {
 	private final String prompt;
 	private final Consumer<BindKey> onCapture;
 	private boolean capturing = true;
+	private int x0;
+	private int y0;
+	private int panelW = 300;
+	private int panelH = 118;
 
 	public KeyCaptureScreen(Screen parent, String prompt, Consumer<BindKey> onCapture) {
 		super(Component.literal("Bind Mod"));
@@ -28,9 +34,13 @@ public class KeyCaptureScreen extends Screen {
 	@Override
 	protected void init() {
 		this.clearWidgets();
-		int cx = this.width / 2;
-		this.addRenderableWidget(Button.builder(Component.literal("Отмена"), b -> this.minecraft.setScreen(this.parent))
-				.bounds(cx - 60, this.height / 2 + 40, 120, 20).build());
+		this.panelW = Math.min(300, this.width - 40);
+		this.panelH = 118;
+		this.x0 = (this.width - this.panelW) / 2;
+		this.y0 = (this.height - this.panelH) / 2;
+
+		this.addRenderableWidget(new GlassButton(this.x0 + this.panelW / 2 - 50, this.y0 + this.panelH - 32,
+				100, 22, "Отмена", false, () -> this.minecraft.setScreen(this.parent)));
 	}
 
 	@Override
@@ -61,15 +71,21 @@ public class KeyCaptureScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-		graphics.fill(0, 0, this.width, this.height, 0xE0101010);
-		super.render(graphics, mouseX, mouseY, partialTick);
-		int cx = this.width / 2;
-		int cy = this.height / 2;
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		graphics.fill(0, 0, this.width, this.height, Theme.BACKDROP);
+	}
 
-		graphics.drawCenteredString(this.font, Component.literal("§l§b" + this.prompt), cx, cy - 30, 0xFFFFFF);
-		graphics.drawCenteredString(this.font, Component.literal("§7Нажмите любую клавишу или кнопку мыши"), cx, cy - 6, 0xA0A0A0);
-		graphics.drawCenteredString(this.font, Component.literal("§8Esc — отмена"), cx, cy + 12, 0x707070);
+	@Override
+	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		this.renderBackground(graphics, mouseX, mouseY, partialTick);
+		Glass.panel(graphics, this.x0, this.y0, this.panelW, this.panelH, 10);
+
+		int cx = this.x0 + this.panelW / 2;
+		Glass.textCentered(graphics, "ЖДУ КЛАВИШУ", cx, this.y0 + 16, Theme.ACCENT);
+		Glass.textCentered(graphics, this.prompt, cx, this.y0 + 38, Theme.TEXT);
+		Glass.textCentered(graphics, "Клавиша или кнопка мыши · Esc — отмена", cx, this.y0 + 54, Theme.FAINT);
+
+		super.render(graphics, mouseX, mouseY, partialTick);
 	}
 
 	@Override
