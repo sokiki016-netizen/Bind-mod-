@@ -27,10 +27,14 @@ public final class BindModConfig {
 	public static final int MODE_JUMP = 1;
 
 	public BindKey menuKey = new BindKey(BindKey.TYPE_KEY, GLFW.GLFW_KEY_RIGHT_ALT);
+	public BindKey waypointKey = new BindKey(BindKey.TYPE_KEY, GLFW.GLFW_KEY_G);
 	public final List<Bind> binds = new ArrayList<>();
+	public final List<Waypoint> waypoints = new ArrayList<>();
 
 	// HUD
 	public boolean armorHud = true;
+	public boolean waypointHud = true;
+	public boolean waypointsEnabled = true;
 	public int hudCorner = 0; // 0 — слева сверху, 1 — справа сверху, 2 — слева снизу, 3 — справа снизу
 
 	// Анти-АФК
@@ -60,6 +64,32 @@ public final class BindModConfig {
 					config.menuKey = key;
 				}
 			}
+			if (object.has("waypointKey") && object.get("waypointKey").isJsonPrimitive()) {
+				BindKey key = BindKey.deserialize(object.get("waypointKey").getAsString());
+				if (key != null && key.isSet()) {
+					config.waypointKey = key;
+				}
+			}
+			if (object.has("waypoints") && object.get("waypoints").isJsonArray()) {
+				for (JsonElement element : object.getAsJsonArray("waypoints")) {
+					if (!element.isJsonObject()) {
+						continue;
+					}
+					JsonObject waypointObject = element.getAsJsonObject();
+					try {
+						String name = waypointObject.has("name") ? waypointObject.get("name").getAsString() : "Метка";
+						double wx = waypointObject.get("x").getAsDouble();
+						double wy = waypointObject.get("y").getAsDouble();
+						double wz = waypointObject.get("z").getAsDouble();
+						int color = readInt(waypointObject, "color", config.waypoints.size());
+						String dimension = waypointObject.has("dimension")
+								? waypointObject.get("dimension").getAsString() : "";
+						config.waypoints.add(new Waypoint(name, wx, wy, wz, color, dimension));
+					} catch (Exception ignored) {
+						BindMod.LOGGER.warn("[Bind Mod] Пропущена битая метка в конфиге");
+					}
+				}
+			}
 			if (object.has("binds") && object.get("binds").isJsonArray()) {
 				JsonArray array = object.getAsJsonArray("binds");
 				for (JsonElement element : array) {
@@ -79,6 +109,8 @@ public final class BindModConfig {
 			if (object.has("hud") && object.get("hud").isJsonObject()) {
 				JsonObject hud = object.getAsJsonObject("hud");
 				config.armorHud = readBoolean(hud, "armorDurability", config.armorHud);
+				config.waypointHud = readBoolean(hud, "waypointList", config.waypointHud);
+				config.waypointsEnabled = readBoolean(hud, "waypointsInWorld", config.waypointsEnabled);
 				config.hudCorner = clamp(readInt(hud, "corner", config.hudCorner), 0, 3);
 			}
 			if (object.has("antiAfk") && object.get("antiAfk").isJsonObject()) {
@@ -125,9 +157,25 @@ public final class BindModConfig {
 			array.add(bindObject);
 		}
 		object.add("binds", array);
+		object.addProperty("waypointKey", this.waypointKey.serialize());
+
+		JsonArray waypointArray = new JsonArray();
+		for (Waypoint waypoint : this.waypoints) {
+			JsonObject waypointObject = new JsonObject();
+			waypointObject.addProperty("name", waypoint.name);
+			waypointObject.addProperty("x", waypoint.x);
+			waypointObject.addProperty("y", waypoint.y);
+			waypointObject.addProperty("z", waypoint.z);
+			waypointObject.addProperty("color", waypoint.color);
+			waypointObject.addProperty("dimension", waypoint.dimension == null ? "" : waypoint.dimension);
+			waypointArray.add(waypointObject);
+		}
+		object.add("waypoints", waypointArray);
 
 		JsonObject hud = new JsonObject();
 		hud.addProperty("armorDurability", this.armorHud);
+		hud.addProperty("waypointList", this.waypointHud);
+		hud.addProperty("waypointsInWorld", this.waypointsEnabled);
 		hud.addProperty("corner", this.hudCorner);
 		object.add("hud", hud);
 
