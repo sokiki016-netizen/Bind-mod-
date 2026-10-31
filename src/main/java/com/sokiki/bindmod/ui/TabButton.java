@@ -2,6 +2,7 @@ package com.sokiki.bindmod.ui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 public class TabButton extends AbstractWidget {
@@ -33,5 +34,9 @@ public class TabButton extends AbstractWidget {
 		}
 		this.action.run();
 		return true;
+	}
+
+	@Override
+	protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
 	}
 }

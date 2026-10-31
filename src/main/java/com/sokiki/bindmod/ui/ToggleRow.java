@@ -2,6 +2,7 @@ package com.sokiki.bindmod.ui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.BooleanSupplier;
@@ -55,5 +56,9 @@ public class ToggleRow extends AbstractWidget {
 		}
 		this.setter.accept(!this.getter.getAsBoolean());
 		return true;
+	}
+
+	@Override
+	protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
 	}
 }
