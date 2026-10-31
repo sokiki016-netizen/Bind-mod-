@@ -2,6 +2,7 @@ package com.sokiki.bindmod.ui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.IntConsumer;
@@ -49,5 +50,9 @@ public class CycleRow extends AbstractWidget {
 		int next = (this.getter.getAsInt() + 1) % this.options.length;
 		this.setter.accept(next);
 		return true;
+	}
+
+	@Override
+	protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
 	}
 }

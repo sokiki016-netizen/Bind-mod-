@@ -3,6 +3,7 @@ package com.sokiki.bindmod.ui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.IntConsumer;
@@ -86,5 +87,9 @@ public class SliderRow extends AbstractWidget {
 		this.dragging = true;
 		this.updateFromMouse(mouseX);
 		return true;
+	}
+
+	@Override
+	protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
 	}
 }
